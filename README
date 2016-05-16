@@ -1,0 +1,43 @@
+这是运行在Arduino上的程序
+Arduino本身是Bluno，带有串口蓝牙，以peri模式连接iPhone
+
+以Addr8加入I2C，Slave模式，仅用于接收命令
+
+支持2D舵机驱动
+支持2个按钮用于单项调试
+支持红外发射(固定为Pin3)
+支持一个有源蜂鸣器
+支持一个外部提示灯
+支持一个3D摇杆
+
+
+
+====主循环逻辑如下====
+
+如果有I2C命令从Pi发来（receiveEventI2C），提示灯闪烁，蜂鸣器响起
+    I2C命令支持字符‘1’，‘2’，它们有Pi写入
+    1，2分别对应找电视和切换HDMI，与button1/button2一致
+
+如果摇杆输入
+    Z方向按下是reset舵机
+    XY是舵机的2D调节
+
+如果按下button1，发起寻找电视的操作（单项调试）
+如果按下button2，发起切换到HDMI的操作（单项调试）
+
+
+====找电视====
+向串口打印命令字，串口蓝牙发出了”~MENU”
+由于串口混合，以~作为命令区分
+从iPhone返回“RET_OK”，表示找到电视，舵机记下该位置
+返回RET_NOT_FOUND，表示没找到，进行2D舵机扫描
+
+====找HDMI====
+类似于找电视
+发出”~KONKA_HDMI”命令，返回
+RET_OK: 发出IR确认进入
+RET_NOT_FOUND：表明没有了source界面，发出IR input
+RET_UP/RET_DOWN：IR发出上下移动
+RET_FAIL：失败，放弃
+
+
