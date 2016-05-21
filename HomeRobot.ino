@@ -251,13 +251,25 @@ void toFindTV()
 
 void toSwitchHDMI()
 {
+  toSwitchINPUT("~KONKA_HDMI");
+}
+
+
+bool toSwitchYPBPR()
+{
+  toSwitchINPUT("~KONKA_YPBPR");
+}
+
+
+void toSwitchINPUT(char *target)
+{
   digitalWrite(speakerPin, HIGH); delay(100); digitalWrite(speakerPin, LOW);
   //    lcd.setCursor(1, 1);
   //    lcd.println("FINDING TV MODE");
 
   if (task_status == TASK_IDLE)
   {
-    bool ret = do_switch_HDMI(); //开始,独占模式
+    bool ret = do_switch_input(target); //开始,独占模式
     Serial.print("result="); Serial.println(ret);
     if (ret)
     {
@@ -407,6 +419,16 @@ void loop()
         break;
       }
 
+    case '4': //switch to YPbPr
+      {
+        if (task_status == TASK_IDLE)
+        {
+          toSwitchYPBPR();
+        }
+        charCmdByI2C = '0';
+        break;
+      }
+
     case 'b': //to beep
       {
         if (task_status == TASK_IDLE)
@@ -417,6 +439,12 @@ void loop()
         charCmdByI2C = '0';
         break;
       }
+
+    case 'n': //nop but actually a short beep for NFC
+      {
+        charCmdByI2C = '0';
+        break;
+      }  
     case '0': //idle
     default:
       break;
@@ -495,7 +523,7 @@ bool do_finding_TV()
 int server_x_shift[5] = {0, -4, -2, +4, +2};
 int index_shift = 0;
 
-bool do_switch_HDMI()
+bool do_switch_input(char *target)
 {
   //进入此状态,移动到初始位置,告知EYE寻找Menu,等待结果
   task_status = TASK_SWITH;
@@ -508,7 +536,7 @@ bool do_switch_HDMI()
   delay(200);
   irsend.sendKogan(KOGAN_INPUT, 32);
 
-  Serial.println("finding HDMI...");
+  Serial.println("finding INPUT...");
 
   unsigned long currentMs = millis();
   unsigned long previousMs = currentMs;
@@ -522,7 +550,7 @@ bool do_switch_HDMI()
       break;
 
     //发出命令字, "~"开头
-    Serial.println("~KONKA_HDMI");  //要求EYE寻找KONKA_HDMI
+    Serial.println(target);  //要求EYE寻找某个目标菜单项
     int ret_code = do_parse_reply(); //等待回复,blocking
     Serial.print("RET:"); Serial.println(ret_code_string[ret_code]);
 
